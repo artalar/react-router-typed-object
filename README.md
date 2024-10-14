@@ -8,6 +8,8 @@ Bringing full typesafety to your React Router configurations
 
 By using React Router Typed Object, you can leverage the power of TypeScript to catch errors at compile time, assist in refactoring, and provide better autocompletion and documentation within your code editor. Check more details and examples in the [Typesafe references and refactorings](#typesafe-references-and-refactorings) docs section.
 
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-router-typed-object?file=src%2Frouter.tsx,src%2Fcomponents.tsx)
+
 ## Features
 
 - **Seamless Integration**: Works with exact `react-router`'s `RouteObject` type and `react-router-dom`'s "createRouter\*" functions.
@@ -147,7 +149,15 @@ The `.navigate()` method of a router path is just a tiny bind function from the 
 
 The motivation behind creating this library stemmed from working on a large legacy project with a massive route configuration exceeding 1,000 lines of code. Managing and maintaining such a large configuration was challenging. It was easy to make mistakes like creating duplicate paths or unintentionally removing or modifying routes that were used elsewhere in the application.
 
-React Router Typed Object addresses these issues by allowing developers to define a strict list of all routes with full typesafety. The "path" property becomes a crucial element to synchronize type references between route usages and route definitions. With this library, you can use TypeScript's powerful tooling to find all route usages from the configuration or locate the relevant configuration part from a usage point. This ensures consistency and reduces the likelihood of errors in your routing logic.
+React Router Typed Object addresses these issues by allowing developers to define a strict list of all routes with full typesafety. The "**path**" property becomes a crucial element to synchronize type references between route usages and route definitions. With this library, you can use TypeScript's powerful tooling to find all route usages from the configuration or locate the relevant configuration part from a usage point. This ensures consistency and reduces the likelihood of errors in your routing logic.
+
+Open this example on [StackBlitz](https://stackblitz.com):
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-router-typed-object?file=src%2Frouter.tsx,src%2Fcomponents.tsx)
+
+![image](https://github.com/user-attachments/assets/071f4a6b-f820-4cb6-8f52-0f0997faffa4)
+
+![image](https://github.com/user-attachments/assets/596a372b-aa88-4be4-bd52-3099ff644622)
 
 ## API Reference
 
