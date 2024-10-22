@@ -85,6 +85,16 @@ describe("inferRouteObject", () => {
     expect(ROUTES["/a/e/:f?"].path({ z: "Z" })).toBe("/a/e/?z=Z");
     expect(ROUTES["/a/e/:f?"].path({ f: "F", z: "Z" })).toBe("/a/e/F?z=Z");
   });
+
+  it("should handle optional search params", () => {
+    const ROUTES = inferRouteObject({
+      path: "a",
+      searchParams: z.object({ q: z.string().optional() }).parse,
+    });
+
+    expect(ROUTES["/a"].path({})).toBe("/a");
+    expect(ROUTES["/a"].path()).toBe("/a");
+  });
 });
 
 describe("createRouter", () => {
