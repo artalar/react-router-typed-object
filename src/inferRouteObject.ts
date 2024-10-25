@@ -96,7 +96,9 @@ export type InferRoutePath<T extends RouteObject, Path extends string> = Record<
         T extends {
           searchParams: SearchParamsContract<infer SearchParams>;
         }
-          ? SearchParams
+          ? {} extends SearchParams
+            ? SearchParams | undefined
+            : SearchParams
           : undefined
       >;
     }
@@ -158,7 +160,7 @@ const _inferRouteObject = <
             return path;
           }
 
-          const searchParamsData = searchParamsContract(params);
+          const searchParamsData = searchParamsContract(params ?? {});
           const searchParams = new URLSearchParams();
 
           for (const [k, v] of Object.entries(searchParamsData)) {
@@ -167,7 +169,8 @@ const _inferRouteObject = <
             }
           }
 
-          return `${path}?${searchParams.toString()}`;
+          const searchParamsString = searchParams.toString();
+          return `${path}${searchParamsString && `?${searchParamsString}`}`;
         };
 
         // eslint-disable-next-line no-param-reassign
