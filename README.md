@@ -22,8 +22,10 @@ By using React Router Typed Object, you can leverage the power of TypeScript to 
 To install React Router Typed Object, use npm or yarn:
 
 ```bash
-npm install react-router-typed-object
+npm install react-router-typed-object @remix-run/router
 ```
+
+> `@remix-run/router` explicit installation is needed to allow correct type inference.
 
 ## Usage
 
