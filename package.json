@@ -1,6 +1,6 @@
 {
   "name": "react-router-typed-object",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
@@ -11,7 +11,7 @@
   "peerDependencies": {
     "react-router": "^6.27.0",
     "react-router-dom": "^6.27.0",
-    "@remix-run/router": "1.20.0"
+    "@remix-run/router": "^1.8.0"
   },
   "devDependencies": {
     "smartbundle": "^0.7.3",
