@@ -40,12 +40,12 @@ The `inferRouteObject` function allows you to define your routes and automatical
 import { inferRouteObject } from "react-router-typed-object";
 
 export const ROUTES = inferRouteObject({
-  path: "a",
+  path: "home",
   children: [
-    { path: "b" },
+    { path: "products" },
     {
-      path: "c",
-      children: [{ children: [{ children: [{ path: "d" }] }] }],
+      path: "categories",
+      children: [{ children: [{ children: [{ path: "electronics" }] }] }],
     },
   ],
 });
@@ -59,12 +59,14 @@ You can define routes with path parameters, and `inferRouteObject` will ensure t
 
 ```tsx
 export const ROUTES = inferRouteObject({
-  path: "a/:b",
-  children: [{ path: "c/:d" }],
+  path: "products/:productId",
+  children: [{ path: "reviews/:reviewId" }],
 });
 
-const path = ROUTES["/a/:b/c/:d"].path({ b: "B", d: "D" });
-// path is "/a/B/c/D"
+const productReviewPath = ROUTES["/products/:productId/reviews/:reviewId"].path(
+  { productId: "123", reviewId: "456" }
+);
+// productReviewPath is "/products/123/reviews/456"
 ```
 
 If you try to omit required parameters or provide incorrect ones, TypeScript will show an error.
@@ -77,20 +79,22 @@ You can define search parameters using any type predicate, which give you both t
 import { z } from "zod";
 
 export const ROUTES = inferRouteObject({
-  path: "a/:b",
+  path: "products/:productId",
   children: [
     {
-      path: "c/:d",
+      path: "reviews/:reviewId",
       searchParams: z.object({
-        z: z.string(),
-        q: z.string().optional(),
+        sortBy: z.enum(["date", "rating"]).default("date"),
+        search: z.string().optional(),
       }).parse, // NOTE the `.parse`, we need only a validation function
     },
   ],
 });
 
-const path = ROUTES["/a/:b/c/:d"].path({ b: "B", d: "D", z: "Z" });
-// path is "/a/B/c/D?z=Z"
+const productReviewPath = ROUTES["/products/:productId/reviews/:reviewId"].path(
+  { productId: "123", reviewId: "456", sortBy: "rating", search: "best" }
+);
+// productReviewPath is "/products/123/reviews/456?sortBy=rating&search=best"
 ```
 
 If you provide invalid search parameters, the validation function will throw an error at runtime, ensuring your app only navigates to valid URLs.
@@ -113,11 +117,16 @@ export const router = createBrowserRouter([ROUTES]);
 
 ```tsx
 const navigate = useNavigate();
-const toD = (b: string, d: string) => {
-  navigate(ROUTES["/a/:b/c/:d"].path({ b, d }));
+const goToProductReview = (productId: string, reviewId: string) => {
+  navigate(
+    ROUTES["/products/:productId/reviews/:reviewId"].path({
+      productId,
+      reviewId,
+    })
+  );
 };
 
-<a onClick={() => toD("B", "D")}>Go to D</a>;
+<a onClick={() => goToProductReview("123", "456")}>Go to Review</a>;
 ```
 
 ### Using the useParams hook
@@ -127,15 +136,16 @@ The `useParams` hook allows you to access route parameters with full type safety
 ```tsx
 function MyComponent() {
   // Get parameters with type safety
-  const params = ROUTES["/a/:b/c/:d"].path.useParams();
-  
+  const params =
+    ROUTES["/products/:productId/reviews/:reviewId"].path.useParams();
+
   // params.b and params.d are typed as string
   // If the route has search parameters, they are also included in the params object
-  
+
   return (
     <div>
-      <h1>Parameter B: {params.b}</h1>
-      <h1>Parameter D: {params.d}</h1>
+      <h1>Product ID: {params.productId}</h1>
+      <h1>Review ID: {params.reviewId}</h1>
     </div>
   );
 }
@@ -146,18 +156,24 @@ You can also provide fallback values for missing parameters:
 ```tsx
 function MyComponent() {
   // Provide fallback values for missing parameters
-  const params = ROUTES["/a/:b/c/:d"].path.useParams({ b: "default-b", d: "default-d" });
-  
+  const params = ROUTES[
+    "/products/:productId/reviews/:reviewId"
+  ].path.useParams({
+    productId: "default-product",
+    reviewId: "default-review",
+  });
+
   return (
     <div>
-      <h1>Parameter B: {params.b}</h1>
-      <h1>Parameter D: {params.d}</h1>
+      <h1>Product: {params.productId}</h1>
+      <h1>Review: {params.reviewId}</h1>
     </div>
   );
 }
 ```
 
 The `useParams` hook will:
+
 1. Return the current route parameters with full type safety
 2. Throw a runtime error if required parameters are missing and not provided in the fallback
 3. Provide TypeScript compile-time errors if you try to access parameters that don't exist
@@ -177,15 +193,21 @@ const ROUTER = createRouter([
     path: "a",
     children: [
       {
-        path: ":b/c/:d",
-        searchParams: z.object({ z: z.string() }).parse,
+        path: ":productId/reviews/:reviewId",
+        searchParams: z.object({
+          sortBy: z.enum(["date", "rating"]).default("date"),
+        }).parse,
       },
     ],
   },
 ]);
 
-ROUTER["/a/:b/c/:d"].path.navigate({ b: "B", d: "D", z: "Z" });
-// `location.href` is "/a/B/c/D?z=Z"
+ROUTER["/products/:productId/reviews/:reviewId"].path.navigate({
+  productId: "123",
+  reviewId: "456",
+  sortBy: "rating",
+});
+// `location.href` is "/products/123/reviews/456?sortBy=rating"
 ```
 
 The `.navigate()` method of a router path is just a tiny bind function from the path to router `navigate` method.
