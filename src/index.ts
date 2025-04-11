@@ -15,6 +15,7 @@ export {
   type InferRoute,
   type FixRoot,
   type InferRoutePath,
+  type UseParamsHook,
   isRoutePattern,
   inferRouteObject,
 } from "./inferRouteObject.js";

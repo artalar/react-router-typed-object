@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 import { type RouteObject } from "react-router";
+import { useLocation } from "react-router-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SearchParamsContract<
@@ -35,6 +36,14 @@ export type Routes = {
   [key in Pattern]?: { path: PathRoute };
 };
 
+// Type for useParams hook
+export type UseParamsHook<
+  Path extends string = string,
+  SearchParams extends SearchParamsType = undefined
+> = (
+  fallback?: Partial<PathRouteParams<Path, SearchParams>>
+) => PathRouteParams<Path, SearchParams>;
+
 export interface PathRoute<
   Path extends string = string,
   SearchParams extends SearchParamsType = undefined
@@ -43,6 +52,13 @@ export interface PathRoute<
   (params: PathRouteParams<Path, SearchParams>): string;
 
   pattern: Path;
+  
+  /**
+   * Hook to get the current route parameters with type safety
+   * @param fallback Optional fallback values for missing parameters
+   * @returns The current route parameters
+   */
+  useParams: UseParamsHook<Path, SearchParams>;
 }
 
 export type PathRouteParams<
@@ -105,9 +121,93 @@ export type InferRoutePath<T extends RouteObject, Path extends string> = Record<
   >
 > &
   InferRoute<T, Path>;
-
 export const isRoutePattern = (pattern: string): pattern is Pattern =>
   pattern.startsWith("/");
+
+// Helper functions for parameter handling
+const extractParamNames = (pattern: string): string[] => {
+  const paths = pattern.split("/");
+  return paths
+    .filter((part) => part.startsWith(":"))
+    .map((name) => name.slice(1));
+};
+
+const validateParams = (
+  params: Record<string, string> | undefined,
+  paramsNames: string[],
+  pattern: string
+): void => {
+  if (!params) {
+    if (paramsNames.length > 0 && paramsNames[0] && !paramsNames[0].endsWith("?")) {
+      throw new Error(`Missing parameters for route "${pattern}"`);
+    }
+    return;
+  }
+  
+  const missedParam = paramsNames.find(
+    (name) => !name.endsWith("?") && !(name in params)
+  );
+  
+  if (missedParam) {
+    throw new Error(
+      `Missing parameter "${missedParam}" for route "${pattern}"`
+    );
+  }
+};
+
+const buildPath = (
+  pattern: string,
+  paramsNames: string[],
+  params: Record<string, string> | undefined
+): string => {
+  let path = pattern;
+  
+  for (const name of paramsNames) {
+    if (name.endsWith("?")) {
+      path = path.replace(
+        `:${name}`,
+        params?.[name.slice(0, -1)] ?? ""
+      );
+    } else {
+      path = path.replace(`:${name}`, params?.[name] ?? "");
+    }
+  }
+  
+  return path;
+};
+
+// Extract path parameters from URL by matching against pattern
+const extractPathParams = (
+  pattern: string,
+  pathname: string
+): Record<string, string> => {
+  const patternParts = pattern.split('/');
+  const pathParts = pathname.split('/');
+  const params: Record<string, string> = {};
+  
+  for (let i = 0; i < patternParts.length; i++) {
+    const patternPart = patternParts[i]!;
+    const pathPart = pathParts[i] || '';
+    
+    if (patternPart.startsWith(':')) {
+      const paramName = patternPart.slice(1);
+      const isOptional = paramName.endsWith('?');
+      const cleanParamName = isOptional ? paramName.slice(0, -1) : paramName;
+      
+      // For non-optional parameters, empty values are considered missing
+      if (pathPart) {
+        // Decode URL-encoded characters
+        params[cleanParamName] = decodeURIComponent(pathPart);
+      } else if (!isOptional) {
+        // Mark as undefined to trigger validation error later
+        params[cleanParamName] = '';
+      }
+    }
+  }
+  
+  return params;
+};
+
 
 const _inferRouteObject = <
   const T extends RouteObject,
@@ -127,34 +227,12 @@ const _inferRouteObject = <
 
       if (isRoutePattern(pattern)) {
         const searchParamsContract = child.searchParams;
-        const paths = pattern.split("/");
-        const paramsNames = paths
-          .filter((part) => part.startsWith(":"))
-          .map((name) => name.slice(1));
+        const paramsNames = extractParamNames(pattern);
 
         const get = (params: void | Record<string, string>) => {
-          const missedParam = params
-            ? paramsNames.find((name) => !(name in params))
-            : paramsNames[0];
-
-          if (missedParam && !missedParam.endsWith("?")) {
-            throw new Error(
-              `Missing parameter "${missedParam}" for route "${pattern}"`
-            );
-          }
-
-          let path: string = pattern;
-
-          for (const name of paramsNames) {
-            if (name.endsWith("?")) {
-              path = path.replace(
-                `:${name}`,
-                params?.[name.slice(0, -1)] ?? ""
-              );
-            } else {
-              path = path.replace(`:${name}`, params?.[name] ?? "");
-            }
-          }
+          validateParams(params as Record<string, string> | undefined, paramsNames, pattern);
+          
+          let path = buildPath(pattern, paramsNames, params as Record<string, string> | undefined);
 
           if (!searchParamsContract) {
             return path;
@@ -173,8 +251,82 @@ const _inferRouteObject = <
           return `${path}${searchParamsString && `?${searchParamsString}`}`;
         };
 
+        // Create the useParams hook
+        const useParamsHook: UseParamsHook<string, typeof searchParamsContract extends {
+          (value: unknown): infer T;
+        } ? T : undefined> = (fallback) => {
+          const location = useLocation();
+          
+          // Extract path parameters from the URL
+          const pathParams = extractPathParams(pattern, location.pathname);
+          
+          // Check for missing required parameters
+          const missingParams: string[] = [];
+          paramsNames.forEach(name => {
+            if (!name.endsWith("?") && (!pathParams[name] || pathParams[name] === '')) {
+              missingParams.push(name);
+            }
+          });
+          
+          // If there are missing parameters, check if fallback provides them
+          if (missingParams.length > 0) {
+            if (fallback) {
+              const stillMissing = missingParams.filter(name => !fallback[name]);
+              if (stillMissing.length > 0) {
+                throw new Error(`Missing parameter "${stillMissing[0]}" for route "${pattern}"`);
+              }
+            } else {
+              throw new Error(`Missing parameter "${missingParams[0]}" for route "${pattern}"`);
+            }
+          }
+          
+          // Create a new object with fallback values first, then override with valid path params
+          const mergedParams: Record<string, string> = { ...(fallback || {}) };
+          
+          // Only add non-empty path params
+          Object.entries(pathParams).forEach(([key, value]) => {
+            if (value !== '') {
+              mergedParams[key] = value;
+            }
+          });
+          
+          // Parse search params if needed
+          if (searchParamsContract && location.search) {
+            const searchParams = new URLSearchParams(location.search);
+            const searchParamsObject: Record<string, string> = {};
+            
+            for (const [key, value] of searchParams.entries()) {
+              searchParamsObject[key] = value;
+            }
+            
+            // Validate search params
+            try {
+              const validatedSearchParams = searchParamsContract(searchParamsObject);
+              return { ...mergedParams, ...validatedSearchParams } as any;
+            } catch (error) {
+              // If validation fails and we have fallback search params, use those
+              if (fallback) {
+                try {
+                  const validatedFallbackParams = searchParamsContract(fallback);
+                  return { ...mergedParams, ...validatedFallbackParams } as any;
+                } catch (fallbackError) {
+                  throw new Error(`Invalid search parameters and fallback: ${error}`);
+                }
+              }
+              throw error;
+            }
+          }
+          
+          return mergedParams as any;
+        };
+
         // eslint-disable-next-line no-param-reassign
-        routes[pattern] = { path: Object.assign(get, { pattern }) };
+        routes[pattern] = {
+          path: Object.assign(get, {
+            pattern,
+            useParams: useParamsHook
+          })
+        };
       }
     }
     if ("children" in child) {

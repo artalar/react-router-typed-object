@@ -16,6 +16,7 @@ By using React Router Typed Object, you can leverage the power of TypeScript to 
 - **Typesafe Route Definitions**: Automatically infer types from your route configurations.
 - **Path Parameter Handling**: Define routes with dynamic parameters and get type-checked path generation.
 - **Search Parameter Validation**: Use any validation library you like to define and validate search parameters.
+- **Type-Safe useParams Hook**: Access route parameters with full type safety using the built-in `useParams` hook.
 
 ## Installation
 
@@ -119,6 +120,48 @@ const toD = (b: string, d: string) => {
 <a onClick={() => toD("B", "D")}>Go to D</a>;
 ```
 
+### Using the useParams hook
+
+The `useParams` hook allows you to access route parameters with full type safety:
+
+```tsx
+function MyComponent() {
+  // Get parameters with type safety
+  const params = ROUTES["/a/:b/c/:d"].path.useParams();
+  
+  // params.b and params.d are typed as string
+  // If the route has search parameters, they are also included in the params object
+  
+  return (
+    <div>
+      <h1>Parameter B: {params.b}</h1>
+      <h1>Parameter D: {params.d}</h1>
+    </div>
+  );
+}
+```
+
+You can also provide fallback values for missing parameters:
+
+```tsx
+function MyComponent() {
+  // Provide fallback values for missing parameters
+  const params = ROUTES["/a/:b/c/:d"].path.useParams({ b: "default-b", d: "default-d" });
+  
+  return (
+    <div>
+      <h1>Parameter B: {params.b}</h1>
+      <h1>Parameter D: {params.d}</h1>
+    </div>
+  );
+}
+```
+
+The `useParams` hook will:
+1. Return the current route parameters with full type safety
+2. Throw a runtime error if required parameters are missing and not provided in the fallback
+3. Provide TypeScript compile-time errors if you try to access parameters that don't exist
+
 ### Navigating with built in `createRouter`
 
 You can use your "ROUTES" object to get a typesafe access to your routes
@@ -183,3 +226,13 @@ Creates a router instance with typesafe navigation methods.
     - `basename`: optional starting path.
     - `createRouter`: optional router creation function, defaults to `createBrowserRouter`.
 - **Returns**: A router instance with navigation methods and all "`\${string}`" routes from `inferRouteObject`
+
+### `path.useParams(fallback?)`
+
+A hook that returns the current route parameters with full type safety.
+
+- **Parameters**:
+  - `fallback`: Optional object containing fallback values for missing parameters.
+- **Returns**: An object containing all route parameters (path and search parameters) with proper types.
+- **Throws**: Runtime error if required parameters are missing and not provided in the fallback.
+- **Type Safety**: Provides TypeScript compile-time errors if you try to access parameters that don't exist.
