@@ -1,4 +1,4 @@
-import { createMemoryRouter } from "react-router-dom";
+import { createMemoryRouter } from "react-router";
 import { it, expect } from "vitest";
 import { z } from "zod";
 

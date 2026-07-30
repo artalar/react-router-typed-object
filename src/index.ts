@@ -7,6 +7,7 @@ export {
 
 export {
   type SearchParamsContract,
+  type TypedRouteObject,
   type Pattern,
   type Routes,
   type PathRoute,

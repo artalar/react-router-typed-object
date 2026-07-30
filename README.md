@@ -12,7 +12,7 @@ By using React Router Typed Object, you can leverage the power of TypeScript to 
 
 ## Features
 
-- **Seamless Integration**: Works with exact `react-router`'s `RouteObject` type and `react-router-dom`'s "createRouter\*" functions.
+- **Seamless Integration**: Works with exact `react-router`'s `RouteObject` type and its "createRouter\*" functions.
 - **Typesafe Route Definitions**: Automatically infer types from your route configurations.
 - **Path Parameter Handling**: Define routes with dynamic parameters and get type-checked path generation.
 - **Search Parameter Validation**: Use any validation library you like to define and validate search parameters.
@@ -23,10 +23,10 @@ By using React Router Typed Object, you can leverage the power of TypeScript to 
 To install React Router Typed Object, use npm or yarn:
 
 ```bash
-npm install react-router-typed-object @remix-run/router
+npm install react-router-typed-object
 ```
 
-> `@remix-run/router` explicit installation is needed to allow correct type inference.
+> Requires `react-router@7`. For `react-router@6` use `react-router-typed-object@1`.
 
 ## Usage
 
@@ -110,7 +110,7 @@ If you provide invalid search parameters, the validation function will throw an 
 OR, of course:
 
 ```tsx
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router";
 
 export const router = createBrowserRouter([ROUTES]);
 ```
@@ -230,7 +230,7 @@ Open this example on [StackBlitz](https://stackblitz.com):
 
 ### `inferRouteObject(routeConfig, basename = '')`
 
-Generates a typesafe routes object from the given route configuration. The configuration is exactly `import { type RouteObject } from "react-router"`, but with additional `searchParams` property with a validation function.
+Generates a typesafe routes object from the given route configuration. The configuration is exactly `import { type RouteObject } from "react-router"`, but with additional `searchParams` property with a validation function. That shape is exported as `TypedRouteObject`, in case you want to annotate a route config separately.
 
 - **Parameters**:
   - `routeConfig`: An object representing the route configuration. It is same object from original React Router (`import { type RouteObject } from "react-router"`). Each route can include `path`, `children`, and additional `searchParams` validation function.

@@ -1,16 +1,15 @@
-import { type Router } from "@remix-run/router";
-import { type RouteObject } from "react-router";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, type DataRouter } from "react-router";
 
 import {
   InferRoute,
   PathRoute,
   Pattern,
+  TypedRouteObject,
   inferRouteObject,
   isRoutePattern,
 } from "./inferRouteObject.js";
 
-export type NavigationOptions = Parameters<Router["navigate"]>[1];
+export type NavigationOptions = Parameters<DataRouter["navigate"]>[1];
 
 export interface Go<Params = Record<string, unknown>> {
   /** Make SPA transition to the route with relative parameters */
@@ -58,14 +57,14 @@ export type DOMRouterOpts<Basename extends Pattern> = Parameters<
 };
 
 export const createRouter = <
-  const T extends RouteObject,
+  const T extends TypedRouteObject,
   Basename extends Pattern = "/"
 >(
   routeObject: Array<T>,
   options: DOMRouterOpts<Basename> & {
     createRouter?: typeof createBrowserRouter;
   } = {}
-): Router & BindRoutes<InferRoute<{ children: [T] }, Basename>> => {
+): DataRouter & BindRoutes<InferRoute<{ children: [T] }, Basename>> => {
   const { createRouter = createBrowserRouter, ...opts } = options;
   const router = createRouter(routeObject, opts);
   const routes = inferRouteObject(
