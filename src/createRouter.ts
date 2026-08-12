@@ -1,10 +1,10 @@
 import { createBrowserRouter, type DataRouter } from "react-router";
 
 import {
-  InferRoute,
-  PathRoute,
-  Pattern,
-  TypedRouteObject,
+  type InferRoute,
+  type PathRoute,
+  type Pattern,
+  type TypedRouteObject,
   inferRouteObject,
   isRoutePattern,
 } from "./inferRouteObject.js";
