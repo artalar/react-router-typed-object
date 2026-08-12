@@ -2,8 +2,7 @@
 // `void` need to describe an optional argument
 /* eslint-disable @typescript-eslint/ban-types */
 
-import { type RouteObject } from "react-router";
-import { useLocation } from "react-router-dom";
+import { useLocation, type RouteObject } from "react-router";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SearchParamsContract<
@@ -14,14 +13,20 @@ export interface SearchParamsContract<
 
 export type SearchParamsType = Record<string, unknown> | undefined;
 
-declare module "react-router" {
-  export interface IndexRouteObject {
-    searchParams?: SearchParamsContract;
-  }
-  export interface NonIndexRouteObject {
-    searchParams?: SearchParamsContract;
-  }
-}
+/**
+ * `react-router`'s `RouteObject` with the extra `searchParams` contract.
+ *
+ * Until `react-router@7` this property was added to `RouteObject` itself by a
+ * module augmentation. `react-router@7` declares `IndexRouteObject` and
+ * `NonIndexRouteObject` as type aliases instead of interfaces, so they can no
+ * longer be augmented — and an own type is a better fit anyway: `searchParams`
+ * is now visible only where this library is actually used, instead of leaking
+ * into every `RouteObject` of the host application.
+ */
+export type TypedRouteObject = RouteObject & {
+  searchParams?: SearchParamsContract;
+  children?: Array<TypedRouteObject>;
+};
 
 /** This generic helps format an intersection type for a more readable view */
 export type Shallow<T> = T extends object
@@ -83,12 +88,12 @@ export type PathRoutePathParams<Path extends string = string> =
     : {};
 
 export type InferRoute<
-  T extends RouteObject,
+  T extends TypedRouteObject,
   Parent extends string
 > = T extends {
   children: [
-    infer Child extends RouteObject,
-    ...infer Children extends Array<RouteObject>
+    infer Child extends TypedRouteObject,
+    ...infer Children extends Array<TypedRouteObject>
   ];
 }
   ? (Child extends { path: infer Path extends string }
@@ -103,7 +108,10 @@ export type FixRoot<T extends string> = T extends `///${infer Path}`
   ? `/${Path}`
   : T;
 
-export type InferRoutePath<T extends RouteObject, Path extends string> = Record<
+export type InferRoutePath<
+  T extends TypedRouteObject,
+  Path extends string
+> = Record<
   Path,
   Shallow<
     Pick<T, "path"> & {
@@ -210,7 +218,7 @@ const extractPathParams = (
 
 
 const _inferRouteObject = <
-  const T extends RouteObject,
+  const T extends TypedRouteObject,
   Parent extends string = ""
 >(
   routeObject: T,
@@ -336,7 +344,7 @@ const _inferRouteObject = <
 };
 
 export const inferRouteObject = <
-  const T extends RouteObject,
+  const T extends TypedRouteObject,
   Basename extends string = ""
 >(
   routeObject: T,

@@ -1,12 +1,12 @@
 import { it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 
-// Mock react-router-dom
-vi.mock("react-router-dom", () => ({
+// Mock react-router
+vi.mock("react-router", () => ({
   useLocation: vi.fn(),
 }));
 
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 
 import { inferRouteObject } from "./inferRouteObject.js";
 
